@@ -33,35 +33,56 @@
       </div>
       <form @submit.prevent="submitForm">
         <div class="form__body" v-if="steps[0].status === 1">
-          <div>
+          <div style="position: relative">
             <label class="form__body__label" for="name">Name</label>
             <input
               type="text"
+              v-model="formData.name"
               name="name"
               id="name"
               class="form__body__input"
               placeholder="e.g Stephen King"
             />
+            <span
+              class="form__body__input--error"
+              v-for="error of v$.formData.name.$errors"
+              :key="error.$uid"
+              >{{ error.$message }}</span
+            >
           </div>
-          <div>
+          <div style="position: relative">
             <label class="form__body__label" for="email">Email Address</label>
             <input
               type="text"
+              v-model="formData.email"
               name="email"
               id="email"
               class="form__body__input"
               placeholder="stephenking@domain.com"
             />
+            <span
+              class="form__body__input--error"
+              v-for="error of v$.formData.email.$errors"
+              :key="error.$uid"
+              >{{ error.$message }}</span
+            >
           </div>
-          <div>
+          <div style="position: relative">
             <label class="form__body__label" for="phone">Phone Number</label>
             <input
               type="text"
+              v-model="formData.phone"
               name="phone"
               id="phone"
               class="form__body__input"
               placeholder="e.g. 01722211100"
             />
+            <span
+              class="form__body__input--error"
+              v-for="error of v$.formData.phone.$errors"
+              :key="error.$uid"
+              >{{ error.$message }}</span
+            >
           </div>
         </div>
         <div class="button-layout">
@@ -90,15 +111,22 @@
           </button>
         </div>
       </form>
+      <p>{{ formData.name }}</p>
+      <p>{{ formData.email }}</p>
+      <p>{{ formData.phone }}</p>
     </div>
   </section>
 </template>
 
 <script>
+import { useVuelidate } from "@vuelidate/core";
+import { required, email } from "@vuelidate/validators";
+
 export default {
   name: "MultiStepFood",
   data() {
     return {
+      v$: useVuelidate(),
       steps: [
         {
           id: 1,
@@ -126,11 +154,42 @@ export default {
           status: 0,
         },
       ],
+
+      formData: {
+        name: "",
+        email: "",
+        phone: "",
+      },
     };
+  },
+  validations() {
+    return {
+      formData: {
+        name: {
+          $property: this.formData.name,
+          $validator: required,
+          $message: "First name is required",
+        },
+        email: {
+          $property: this.formData.email,
+          $validator: required,
+          $message: "Email is required",
+        },
+        phone: {
+          $property: this.formData.phone,
+          $validator: required,
+          $message: "Phone is required",
+        },
+      },
+    };
+  },
+  watch: {
+    "formData.name": function (newVal) {
+      console.log(newVal);
+    },
   },
   computed: {
     currentStep() {
-      console.log("trigger");
       return this.steps.find((step) => step.status === 1);
     },
   },
@@ -140,11 +199,13 @@ export default {
     },
 
     next() {
-      const currentIndex = this.steps.findIndex((step) => step.status === 1);
-      this.steps[currentIndex + 1].status = 1;
-      this.steps[currentIndex].status = 0;
+      // const currentIndex = this.steps.findIndex((step) => step.status === 1);
+      // this.steps[currentIndex + 1].status = 1;
+      // this.steps[currentIndex].status = 0;
 
-      console.log();
+      const result = this.v$.$validate();
+      console.log(this.v$);
+      console.log("next");
     },
 
     back() {
@@ -268,7 +329,7 @@ export default {
         z-index: 10;
         .rounded-position {
           color: white;
-          border: 2px solid white;
+          border: 3px solid white;
           width: 30px;
           height: 30px;
           border-radius: 50px;
@@ -283,6 +344,7 @@ export default {
             font-weight: 600;
             background-color: $form-primary-light;
             border-color: $form-primary-light;
+            transform: scale(1.3);
           }
         }
 
@@ -341,7 +403,7 @@ export default {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 40px;
 
     @include lg {
       padding-right: 210px;
@@ -367,6 +429,15 @@ export default {
 
       &:focus {
         border-color: $form-primary;
+      }
+
+      &--error {
+        color: red;
+        display: inline-block;
+        margin-top: 8px;
+        position: absolute;
+        bottom: -22px;
+        right: 5px;
       }
     }
 
