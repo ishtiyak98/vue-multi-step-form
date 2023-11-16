@@ -40,14 +40,16 @@
               v-model="formData.name"
               name="name"
               id="name"
+              :class="{
+                'form__body__input--error': formValidation.nameValidation.error,
+              }"
               class="form__body__input"
               placeholder="e.g Stephen King"
             />
             <span
-              class="form__body__input--error"
-              v-for="error of v$.formData.name.$errors"
-              :key="error.$uid"
-              >{{ error.$message }}</span
+              v-if="formValidation.nameValidation.error"
+              class="form__body__input--error__message"
+              >{{ formValidation.nameValidation.message }}</span
             >
           </div>
           <div style="position: relative">
@@ -57,14 +59,17 @@
               v-model="formData.email"
               name="email"
               id="email"
+              :class="{
+                'form__body__input--error':
+                  formValidation.emailValidation.error,
+              }"
               class="form__body__input"
               placeholder="stephenking@domain.com"
             />
             <span
-              class="form__body__input--error"
-              v-for="error of v$.formData.email.$errors"
-              :key="error.$uid"
-              >{{ error.$message }}</span
+              v-if="formValidation.emailValidation.error"
+              class="form__body__input--error__message"
+              >{{ formValidation.emailValidation.message }}</span
             >
           </div>
           <div style="position: relative">
@@ -74,14 +79,17 @@
               v-model="formData.phone"
               name="phone"
               id="phone"
+              :class="{
+                'form__body__input--error':
+                  formValidation.phoneValidation.error,
+              }"
               class="form__body__input"
               placeholder="e.g. 01722211100"
             />
             <span
-              class="form__body__input--error"
-              v-for="error of v$.formData.phone.$errors"
-              :key="error.$uid"
-              >{{ error.$message }}</span
+              v-if="formValidation.phoneValidation.error"
+              class="form__body__input--error__message"
+              >{{ formValidation.phoneValidation.message }}</span
             >
           </div>
         </div>
@@ -111,22 +119,15 @@
           </button>
         </div>
       </form>
-      <p>{{ formData.name }}</p>
-      <p>{{ formData.email }}</p>
-      <p>{{ formData.phone }}</p>
     </div>
   </section>
 </template>
 
 <script>
-import { useVuelidate } from "@vuelidate/core";
-import { required, email } from "@vuelidate/validators";
-
 export default {
   name: "MultiStepFood",
   data() {
     return {
-      v$: useVuelidate(),
       steps: [
         {
           id: 1,
@@ -160,32 +161,35 @@ export default {
         email: "",
         phone: "",
       },
-    };
-  },
-  validations() {
-    return {
-      formData: {
-        name: {
-          $property: this.formData.name,
-          $validator: required,
-          $message: "First name is required",
+
+      formValidation: {
+        nameValidation: {
+          error: false,
+          message: "",
         },
-        email: {
-          $property: this.formData.email,
-          $validator: required,
-          $message: "Email is required",
+        emailValidation: {
+          error: false,
+          message: "",
         },
-        phone: {
-          $property: this.formData.phone,
-          $validator: required,
-          $message: "Phone is required",
+        phoneValidation: {
+          error: false,
+          message: "",
         },
       },
     };
   },
+
   watch: {
     "formData.name": function (newVal) {
-      console.log(newVal);
+      this.checkName(newVal);
+    },
+
+    "formData.email": function (newVal) {
+      this.checkEmail(newVal);
+    },
+
+    "formData.phone": function (newVal) {
+      this.checkPhone(newVal);
     },
   },
   computed: {
@@ -199,19 +203,55 @@ export default {
     },
 
     next() {
-      // const currentIndex = this.steps.findIndex((step) => step.status === 1);
-      // this.steps[currentIndex + 1].status = 1;
-      // this.steps[currentIndex].status = 0;
+      this.checkName(this.formData.name);
+      this.checkEmail(this.formData.email);
+      this.checkPhone(this.formData.phone);
 
-      const result = this.v$.$validate();
-      console.log(this.v$);
-      console.log("next");
+      if (
+        !this.formValidation.nameValidation.error &&
+        !this.formValidation.emailValidation.error &&
+        !this.formValidation.phoneValidation.error
+      ) {
+        const currentIndex = this.steps.findIndex((step) => step.status === 1);
+        this.steps[currentIndex + 1].status = 1;
+        this.steps[currentIndex].status = 0;
+      }
     },
 
     back() {
       const currentIndex = this.steps.findIndex((step) => step.status === 1);
       this.steps[currentIndex - 1].status = 1;
       this.steps[currentIndex].status = 0;
+    },
+
+    checkName(name) {
+      if (name.length <= 0) {
+        this.formValidation.nameValidation.error = true;
+        this.formValidation.nameValidation.message = "Name cannot be empty!";
+      } else if (name.length > 0) {
+        this.formValidation.nameValidation.error = false;
+        this.formValidation.nameValidation.message = "";
+      }
+    },
+
+    checkEmail(email) {
+      if (email.length <= 0) {
+        this.formValidation.emailValidation.error = true;
+        this.formValidation.emailValidation.message = "Email cannot be empty!";
+      } else if (email.length > 0) {
+        this.formValidation.emailValidation.error = false;
+        this.formValidation.emailValidation.message = "";
+      }
+    },
+
+    checkPhone(phone) {
+      if (phone.length <= 0) {
+        this.formValidation.phoneValidation.error = true;
+        this.formValidation.phoneValidation.message = "Phone cannot be empty!";
+      } else if (phone.length > 0) {
+        this.formValidation.phoneValidation.error = false;
+        this.formValidation.phoneValidation.message = "";
+      }
     },
   },
 };
@@ -432,12 +472,15 @@ export default {
       }
 
       &--error {
-        color: red;
-        display: inline-block;
-        margin-top: 8px;
-        position: absolute;
-        bottom: -22px;
-        right: 5px;
+        border-color: $form-error;
+        &__message {
+          color: $form-error;
+          display: inline-block;
+          margin-top: 8px;
+          position: absolute;
+          bottom: -22px;
+          right: 5px;
+        }
       }
     }
 
