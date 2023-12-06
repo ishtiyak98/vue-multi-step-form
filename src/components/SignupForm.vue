@@ -28,8 +28,10 @@
     </div>
     <div style="width: 100%; height: 100%">
       <div>
-        <h2 class="form__header">{{ currentStep.name }}</h2>
-        <p class="form__description">{{ currentStep.description }}</p>
+        <h2 class="form__header">
+          {{ currentStep.name }}
+        </h2>
+        <p class="form__description">{{ currentStep.description }}.</p>
       </div>
       <form @submit.prevent="submitForm">
         <div class="form__body" v-if="steps[0].status === 1">
@@ -93,6 +95,58 @@
             >
           </div>
         </div>
+
+        <!-- for 2nd step -->
+        <div class="form__body" v-if="steps[1].status === 1">
+          <div>
+            <div
+              class="radio-select__wrapper"
+              v-for="activePlan in plans.filter((plan) => plan.active === true)"
+              :key="activePlan.id"
+            >
+              <div
+                class="select"
+                v-for="plan in activePlan.categories"
+                :key="plan.id"
+                @click="()=> {
+                  
+                }"
+              >
+                <input
+                  class="form__body__radio"
+                  type="radio"
+                  :name="activePlan.name"
+                  :id="plan.name"
+                />
+                <label class="form__body__radio-label" :for="plan.name">
+                  <div class="form__body__radio-label__wrapper">
+                    <div class="icon">
+                      <span><v-icon scale="1.8" :name="plan.iconName" /></span>
+                    </div>
+                    <div class="content">
+                      <p class="content__name">{{ plan.name }}</p>
+                      <p class="content__price">${{ plan.price }}</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+              <div class="toggle-btn__wrapper">
+                <p>Monthly</p>
+                <label class="toggle-btn">
+                  <input
+                    :checked="activePlan.name === 'yearly'"
+                    type="checkbox"
+                    name=""
+                    id=""
+                    v-model="planToggle"
+                  />
+                  <span class="toggle-btn__slider"></span>
+                </label>
+                <p>Yearly</p>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="button-layout">
           <button
             v-if="!(steps[0].status === 1)"
@@ -124,10 +178,16 @@
 </template>
 
 <script>
+import { OhVueIcon } from "oh-vue-icons";
+
 export default {
   name: "MultiStepFood",
+  components: {
+    "v-icon": OhVueIcon,
+  },
   data() {
     return {
+      planToggle: false,
       steps: [
         {
           id: 1,
@@ -156,10 +216,34 @@ export default {
         },
       ],
 
+      plans: [
+        {
+          id: 1,
+          name: "monthly",
+          active: true,
+          categories: [
+            { id: 11, name: "arcade", price: 9, iconName: "si-applearcade" },
+            { id: 12, name: "advanced", price: 12, iconName: "si-applearcade" },
+            { id: 13, name: "pro", price: 15, iconName: "si-applearcade" },
+          ],
+        },
+        {
+          id: 2,
+          name: "yearly",
+          active: false,
+          categories: [
+            { id: 21, name: "arcade", price: 15, iconName: "si-applearcade" },
+            { id: 22, name: "advanced", price: 25, iconName: "si-applearcade" },
+            { id: 23, name: "pro", price: 40, iconName: "si-applearcade" },
+          ],
+        },
+      ],
+
       formData: {
         name: "",
         email: "",
         phone: "",
+        selectedPlan: {},
       },
 
       formValidation: {
@@ -191,6 +275,16 @@ export default {
     "formData.phone": function (newVal) {
       this.checkPhone(newVal);
     },
+
+    planToggle: function (newVal) {
+      if (newVal === false) {
+        this.plans.find((plan) => plan.name === "yearly").active = false;
+        this.plans.find((plan) => plan.name === "monthly").active = true;
+      } else {
+        this.plans.find((plan) => plan.name === "yearly").active = true;
+        this.plans.find((plan) => plan.name === "monthly").active = false;
+      }
+    },
   },
   computed: {
     currentStep() {
@@ -202,6 +296,7 @@ export default {
       console.log("form-submitted");
     },
 
+    //-------- form next method --------
     next() {
       this.checkName(this.formData.name);
       this.checkEmail(this.formData.email);
@@ -218,12 +313,14 @@ export default {
       }
     },
 
+    //-------- form back method --------
     back() {
       const currentIndex = this.steps.findIndex((step) => step.status === 1);
       this.steps[currentIndex - 1].status = 1;
       this.steps[currentIndex].status = 0;
     },
 
+    //-------- form name field validation --------
     checkName(name) {
       if (name.length <= 0) {
         this.formValidation.nameValidation.error = true;
@@ -234,20 +331,31 @@ export default {
       }
     },
 
+    //-------- form email field validation --------
     checkEmail(email) {
+      let regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+
       if (email.length <= 0) {
         this.formValidation.emailValidation.error = true;
         this.formValidation.emailValidation.message = "Email cannot be empty!";
+      } else if (!email.match(regex)) {
+        this.formValidation.emailValidation.error = true;
+        this.formValidation.emailValidation.message = "Not a valid mail!";
       } else if (email.length > 0) {
         this.formValidation.emailValidation.error = false;
         this.formValidation.emailValidation.message = "";
       }
     },
 
+    //-------- form phone field validation --------
     checkPhone(phone) {
       if (phone.length <= 0) {
         this.formValidation.phoneValidation.error = true;
         this.formValidation.phoneValidation.message = "Phone cannot be empty!";
+      } else if (phone.length < 11 || phone.length > 11) {
+        this.formValidation.phoneValidation.error = true;
+        this.formValidation.phoneValidation.message =
+          "Please enter 11 digit number!";
       } else if (phone.length > 0) {
         this.formValidation.phoneValidation.error = false;
         this.formValidation.phoneValidation.message = "";
@@ -446,7 +554,7 @@ export default {
     gap: 40px;
 
     @include lg {
-      padding-right: 210px;
+      padding-right: 110px;
     }
 
     &__label {
@@ -480,6 +588,106 @@ export default {
           position: absolute;
           bottom: -22px;
           right: 5px;
+        }
+      }
+    }
+
+    .radio-select__wrapper {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 20px;
+
+      @include lg {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    &__radio {
+      display: none;
+    }
+
+    &__radio-label {
+      display: inline-flex;
+      margin-bottom: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      width: 100%;
+      border: 2px solid rgb(163, 163, 163);
+      background-color: rgb(245, 245, 245);
+      cursor: pointer;
+
+      &:hover {
+        border: 2px solid $form-primary;
+        color: white;
+        background-color: $form-primary;
+      }
+
+      &__wrapper {
+        display: flex;
+        gap: 18px;
+        .content {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+
+          &__name {
+            font-size: 20px;
+            text-transform: capitalize;
+          }
+
+          &__price {
+            font-size: 24px;
+          }
+        }
+      }
+    }
+
+    .toggle-btn__wrapper {
+      display: flex;
+      gap: 20px;
+      .toggle-btn {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 22px;
+
+        input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+
+          &:checked + .toggle-btn__slider {
+            background-color: $form-primary;
+
+            &::before {
+              transform: translate(180%, -50%);
+            }
+          }
+        }
+
+        &__slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgb(217, 217, 217);
+          transition: all 0.4s;
+          border-radius: 50px;
+          display: flex;
+
+          &::before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            top: 50%;
+            transform: translate(20%, -50%);
+            background-color: white;
+            transition: all 0.4s;
+            border-radius: 50px;
+          }
         }
       }
     }
