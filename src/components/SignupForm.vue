@@ -106,11 +106,12 @@
             >
               <div
                 class="select"
+                :class="{
+                  'select--active': formData.selectedPlan.id === plan.id,
+                }"
                 v-for="plan in activePlan.categories"
                 :key="plan.id"
-                @click="()=> {
-                  
-                }"
+                @click="() => (formData.selectedPlan = plan)"
               >
                 <input
                   class="form__body__radio"
@@ -600,6 +601,16 @@ export default {
       @include lg {
         grid-template-columns: repeat(3, 1fr);
       }
+
+      .select {
+        &--active {
+          .form__body__radio-label {
+            border: 2px solid $form-primary;
+            color: white;
+            background-color: $form-primary;
+          }
+        }
+      }
     }
 
     &__radio {
@@ -614,6 +625,7 @@ export default {
       width: 100%;
       border: 2px solid rgb(163, 163, 163);
       background-color: rgb(245, 245, 245);
+      transition: all 0.4s;
       cursor: pointer;
 
       &:hover {

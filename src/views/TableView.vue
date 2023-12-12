@@ -49,7 +49,6 @@ export default {
               section: "B",
             })
             .map((item) => {
-              console.log("push");
               this.students.push(item);
             });
         }

@@ -18,3 +18,19 @@ body {
   max-width: 1280px;
   margin: 0 auto;
 }
+
+::-webkit-scrollbar {
+  //display: none;
+  width: 8px;
+  position: absolute;
+}
+::-webkit-scrollbar-track {
+  background: rgb(191, 191, 191);
+}
+::-webkit-scrollbar-thumb {
+  background: #464646;
+  border-radius: 20px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(114, 166, 184);
+}
